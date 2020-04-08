@@ -3,6 +3,16 @@ const substanceController = require(`./../controllers/substanceController`)
 
 const router = express.Router();
 
+router.use((req, res, next) => {
+  if (req.session.user) {
+    next()
+  } else {
+    res.status(401).json({
+      status: `failed`,
+    });
+  }
+})
+
 router
   .route(`/`)
   .get(substanceController.getAllSubstances)
