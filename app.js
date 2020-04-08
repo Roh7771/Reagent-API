@@ -33,7 +33,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       sameSite: 'none',
-      secure: false
+      secure: true,
+      domain: 'roh7771.github.io'
     },
     store,
   })
@@ -44,7 +45,8 @@ app.use(function(req, res, next) {
   let token = req.csrfToken();
   res.cookie('X-CSRF-TOKEN', token, {
     sameSite: 'none',
-    secure: false
+    secure: true,
+    domain: 'roh7771.github.io'
   });
   res.locals.csrfToken = token;
   next();
