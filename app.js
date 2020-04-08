@@ -31,6 +31,10 @@ app.use(
     secret: "some secret value",
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      sameSite: 'none',
+      secure: false
+    },
     store,
   })
 );
@@ -38,7 +42,10 @@ app.use(cookieParser());
 app.use(csrf());
 app.use(function(req, res, next) {
   let token = req.csrfToken();
-  res.cookie('X-CSRF-TOKEN', token);
+  res.cookie('X-CSRF-TOKEN', token, {
+    sameSite: 'none',
+    secure: false
+  });
   res.locals.csrfToken = token;
   next();
 });
