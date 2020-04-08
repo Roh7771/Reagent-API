@@ -35,7 +35,6 @@ app.use(
     cookie: {
       sameSite: 'none',
       secure: true,
-      domain: 'roh7771.github.io'
     },
     store,
   })
