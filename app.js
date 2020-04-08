@@ -8,7 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const cookieParser = require('cookie-parser');
 
 const corsOptions = {
-  origin: "https://roh7771.github.io/Reagent-List",
+  origin: "https://roh7771.github.io",
   credentials: true,
 };
 
