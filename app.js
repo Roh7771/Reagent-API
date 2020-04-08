@@ -8,7 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const cookieParser = require('cookie-parser');
 
 const corsOptions = {
-  origin: "https://roh7771.github.io",
+  origin: ["https://roh7771.github.io", "http://localhost:9000"],
   credentials: true,
 };
 
@@ -31,10 +31,6 @@ app.use(
     secret: "some secret value",
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      sameSite: 'none',
-      secure: true
-    },
     store,
   })
 );
@@ -42,10 +38,7 @@ app.use(cookieParser());
 app.use(csrf());
 app.use(function(req, res, next) {
   let token = req.csrfToken();
-  res.cookie('X-CSRF-TOKEN', token, {
-    sameSite: 'none',
-    secure: true
-  });
+  res.cookie('X-CSRF-TOKEN', token);
   res.locals.csrfToken = token;
   next();
 });
