@@ -6,10 +6,12 @@ exports.checkSession = async (req, res) => {
     if (req.session.user) {
       res.status(200).json({
         status: `success`,
+        csrfToken: res.locals.csrfToken
       });
     } else {
       res.status(401).json({
         status: `failed`,
+        csrfToken: res.locals.csrfToken
       });
     }
   } catch (err) {

@@ -40,17 +40,12 @@ app.use(
   })
 );
 app.use(cookieParser());
-// app.use(csrf());
-// app.use(function(req, res, next) {
-//   let token = req.csrfToken();
-//   res.cookie('X-CSRF-TOKEN', token, {
-//     sameSite: 'none',
-//     secure: true,
-//     domain: 'roh7771.github.io'
-//   });
-//   res.locals.csrfToken = token;
-//   next();
-// });
+app.use(csrf());
+app.use(function(req, res, next) {
+  let token = req.csrfToken();
+  res.locals.csrfToken = token;
+  next();
+});
 
 // 3) ROUTES
 app.use("/api/v1/substances", substanceRouter);
