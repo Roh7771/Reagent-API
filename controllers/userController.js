@@ -1,95 +1,96 @@
-const User = require("./../models/userModel");
-const bcrypt = require("bcryptjs");
+const User = require("../models/userModel");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/appError");
+const factory = require("./handlerFactory");
+const multer = require("multer");
 
-exports.checkSession = async (req, res) => {
-  try {
-    if (req.session.user) {
-      res.status(200).json({
-        status: `success`,
-        csrfToken: res.locals.csrfToken
-      });
-    } else {
-      res.status(401).json({
-        status: `failed`,
-        csrfToken: res.locals.csrfToken
-      });
-    }
-  } catch (err) {
-    res.status(401).json({
-      status: `failed`,
-      message: err,
-    });
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/img/users')
+  },
+  filename: (req, file, cb) => {
+    const ext = file.mimetype.split('/')[1];
+    cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
   }
-};
+});
 
-exports.checkUser = async (req, res) => {
-  try {
-    const user = await User.findOne({ name: req.body.name });
-
-    if (user) {
-      const areSame = await bcrypt.compare(req.body.password, user.password);
-
-      if (areSame) {
-        req.session.user = user;
-
-        req.session.save((err) => {
-          if (err) throw err;
-          res.status(200).json({
-            status: `success`,
-            user,
-          });
-        });
-      } else {
-        res.status(400).json({
-          status: `failed`,
-          message: "Неверное имя или пароль",
-        });
-      }
-    }
-  } catch (err) {
-    res.status(401).json({
-      status: `failed`,
-      message: err,
-    });
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Not a image!', 400), false);
   }
-};
+}
 
-exports.createUser = async (req, res) => {
-  try {
-    const user = await User.findOne({ name: req.body.name });
-    if (user) {
-      res.status(400).json({
-        status: `failed`,
-        message: "Пользователь с таким именем уже существует",
-      });
-      return;
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter
+});
+
+exports.uploadUserPhoto = upload.single('photo')
+
+// Функция фильтрует req.body, когда пользователь хочет изменить свои данные. Необходимо, чтобы от не смог установить себе, например, поле role: admin
+// В req.body останутся только те поля, которые переданы в аргументы в функции, начиная со второго (все они будут записаны в переменную allowedFileds внутри функции)
+const filterObj = (obj, ...allowedFileds) => {
+  const newObj = {};
+
+  Object.keys(obj).forEach((el) => {
+    if (allowedFileds.includes(el)) {
+      newObj[el] = obj[el];
     }
-
-    const hashPassword = await bcrypt.hash(req.body.password, 10);
-
-    const newUser = await User.create({ ...req.body, password: hashPassword });
-
-    req.session.user = newUser;
-
-    req.session.save((err) => {
-      if (err) throw err;
-      res.status(201).json({
-        status: `success`,
-        user: newUser,
-      });
-    });
-  } catch (err) {
-    res.status(400).json({
-      status: `failed`,
-      message: err,
-    });
-  }
-};
-
-exports.logOutUser = async (req, res) => {
-  req.session.destroy(() => {
-    res.status(200).json({
-      status: `success`,
-    });
   });
+
+  return newObj;
 };
+
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+}
+exports.getUser = factory.getOne(User);
+
+exports.getAllUsers = factory.getAll(User);
+
+// Функция для редактирования данных самим юзером
+exports.updateMe = catchAsync(async (req, res, next) => {
+  // Запрещается менять пароль через этот рут
+  if (req.body.password) {
+    return next(
+      new AppError(
+        "This route in not for password update. Please use /updateMyPassword",
+        400
+      )
+    );
+  }
+  //
+
+  // Фильтрация изменяемых полей
+  const filteredBody = filterObj(req.body, "name");
+  if (req.file) {
+    filteredBody.photo = req.file.filename;
+  }
+  //
+
+  const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      user: updatedUser,
+    },
+  });
+});
+
+// Функция позволяет "удалить" себя из базы данных путем изменения флага active
+// В будущем, при попытке получить список пользователей админом эти пользователи не появятся в списке
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  await User.findByIdAndUpdate(req.user.id, { active: false });
+
+  res.status(204).json({
+    status: "success",
+    data: null,
+  });
+});

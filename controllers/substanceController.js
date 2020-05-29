@@ -1,121 +1,25 @@
 const Substance = require("./../models/substanceModel");
+const factory = require("./handlerFactory");
 
-exports.createSubstance = async (req, res) => {
-  try {
-    const newSubstance = await Substance.create(req.body);
+exports.createSubstance = factory.createOne(Substance);
 
-    res.status(201).json({
-      status: `success`,
-      substance: newSubstance
-    });
-  } catch (err) {
-    res.status(400).json({
-      status: `failed`,
-      message: err
-    });
-  }
-};
+exports.getAllSubstances = factory.getAll(Substance);
 
-exports.getAllSubstances = async (req, res) => {
-  try {
-    const queryObj = { ...req.query };
+exports.getSubstance = factory.getOne(Substance);
 
-    const excludedFields = [`page`, `sort`, `limit`, `fileds`];
-    excludedFields.forEach(el => delete queryObj[el]);
+exports.updateSubstance = factory.updateOne(Substance);
 
-    if (queryObj.name) {
-      queryObj.name = {
-        $regex: queryObj.name,
-        $options: "i"
-      };
-    }
+// exports.deleteSubstance = catchAsync(async (req, res, next) => {
+//   const substance = await Substance.findByIdAndDelete(req.params.id);
 
-    if (queryObj.casNumber) {
-      queryObj.casNumber = {
-        $regex: queryObj.casNumber,
-        $options: "i"
-      }
-    }
+//   if (!substance) {
+//     return next(new AppError('No substance found with that ID', 404)); // все ожидаемые ошибки теперь создаются с помощью специального класса и пробрасываются в next
+//   }
 
-    if (queryObj.location) {
-      queryObj.location = {
-        $in: queryObj.location.split(',')
-      };
-    }
+//   res.status(204).json({
+//     status: `success`,
+//     data: null,
+//   });
+// });
 
-    let query = Substance.find(queryObj);
-
-    if (req.query.sort) {
-      query = query.sort(`${req.query.sort} number`);
-    } else {
-      query = query.sort(`location number`);
-    }
-
-    const substances = await query;
-
-    res.status(200).json({
-      status: `success`,
-      substances
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: `failed`,
-      message: err
-    });
-  }
-};
-
-exports.getSubstance = async (req, res) => {
-  try {
-    const substance = await Substance.findById(req.params.id);
-
-    res.status(200).json({
-      status: `success`,
-      substance
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: `failed`,
-      message: err
-    });
-  }
-};
-
-exports.updateSubstance = async (req, res) => {
-  try {
-    const substance = await Substance.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true
-      }
-    );
-
-    res.status(200).json({
-      status: `success`,
-      substance
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: `failed`,
-      message: err
-    });
-  }
-};
-
-exports.deleteSubstance = async (req, res) => {
-  try {
-    await Substance.findByIdAndDelete(req.params.id);
-
-    res.status(204).json({
-      status: `success`,
-      data: null
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: `failed`,
-      message: err
-    });
-  }
-};
+exports.deleteSubstance = factory.deleteOne(Substance);
