@@ -8,7 +8,6 @@ const userRoutes = require("./routes/userRoutes");
 const cookieParser = require('cookie-parser');
 
 const corsOptions = {
-  origin: [/^https:\/\/roh7771\.github\.io/, "http://localhost:9000"],
   credentials: true,
 };
 
