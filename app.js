@@ -8,6 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const cookieParser = require('cookie-parser');
 
 const corsOptions = {
+  origin: "*",
   credentials: true,
 };
 
