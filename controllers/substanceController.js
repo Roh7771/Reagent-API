@@ -42,6 +42,12 @@ exports.getAllSubstances = async (req, res) => {
         $in: queryObj.location.split(',')
       };
     }
+    
+    if (queryObj.place) {
+      queryObj.place = {
+        $in: queryObj.place.split(','),
+      };
+    }
 
     let query = Substance.find(queryObj);
 
